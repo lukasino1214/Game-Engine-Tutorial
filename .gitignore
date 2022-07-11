@@ -30,3 +30,5 @@
 *.out
 *.app
 build
+.cache
+tutorials

@@ -10,6 +10,11 @@ namespace lve {
         Texture(LveDevice &device, const std::string &filepath);
         ~Texture();
 
+        Texture(const Texture &) = delete;
+        Texture &operator=(const Texture &) = delete;
+        Texture(Texture &&) = delete;
+        Texture &operator=(Texture &&) = delete;
+
         VkSampler getSampler() { return sampler; }
         VkImageView getImageView() { return imageView; }
         VkImageLayout getImageLayout() { return imageLayout; }
