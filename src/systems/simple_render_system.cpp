@@ -19,9 +19,9 @@ struct SimplePushConstantData {
 };
 
 SimpleRenderSystem::SimpleRenderSystem(
-    LveDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
+    LveDevice& device, VkRenderPass renderPass, std::vector<VkDescriptorSetLayout> setLayouts)
     : lveDevice{device} {
-  createPipelineLayout(globalSetLayout);
+  createPipelineLayout(setLayouts);
   createPipeline(renderPass);
 }
 
@@ -29,18 +29,16 @@ SimpleRenderSystem::~SimpleRenderSystem() {
   vkDestroyPipelineLayout(lveDevice.device(), pipelineLayout, nullptr);
 }
 
-void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+void SimpleRenderSystem::createPipelineLayout(std::vector<VkDescriptorSetLayout> setLayouts) {
   VkPushConstantRange pushConstantRange{};
   pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
   pushConstantRange.offset = 0;
   pushConstantRange.size = sizeof(SimplePushConstantData);
 
-  std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout};
-
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
-  pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
+  pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(setLayouts.size());
+  pipelineLayoutInfo.pSetLayouts = setLayouts.data();
   pipelineLayoutInfo.pushConstantRangeCount = 1;
   pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
   if (vkCreatePipelineLayout(lveDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) !=
@@ -66,7 +64,7 @@ void SimpleRenderSystem::createPipeline(VkRenderPass renderPass) {
 void SimpleRenderSystem::renderGameObjects(FrameInfo& frameInfo) {
   lvePipeline->bind(frameInfo.commandBuffer);
 
-  vkCmdBindDescriptorSets(
+  /*vkCmdBindDescriptorSets(
       frameInfo.commandBuffer,
       VK_PIPELINE_BIND_POINT_GRAPHICS,
       pipelineLayout,
@@ -74,7 +72,7 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo& frameInfo) {
       1,
       &frameInfo.globalDescriptorSet,
       0,
-      nullptr);
+      nullptr);*/
 
   for (auto& kv : frameInfo.gameObjects) {
     auto& obj = kv.second;
@@ -91,7 +89,7 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo& frameInfo) {
         sizeof(SimplePushConstantData),
         &push);
     obj.model->bind(frameInfo.commandBuffer);
-    obj.model->draw(frameInfo.commandBuffer);
+    obj.model->draw(frameInfo.commandBuffer, frameInfo.globalDescriptorSet, pipelineLayout);
   }
 }
 

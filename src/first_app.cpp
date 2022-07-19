@@ -25,9 +25,9 @@ namespace lve {
 FirstApp::FirstApp() {
   globalPool =
       LveDescriptorPool::Builder(lveDevice)
-          .setMaxSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT)
+          .setMaxSets(1000)
           .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, LveSwapChain::MAX_FRAMES_IN_FLIGHT)
-          .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, LveSwapChain::MAX_FRAMES_IN_FLIGHT)
+          .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
           .build();
   loadGameObjects();
 }
@@ -59,6 +59,14 @@ void FirstApp::run() {
           .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
           .build();
 
+  auto materialSetLayout =
+      LveDescriptorSetLayout::Builder(lveDevice)
+          .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+          .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+          .addBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+          .build();
+
+
   std::vector<VkDescriptorSet> globalDescriptorSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
   for (int i = 0; i < globalDescriptorSets.size(); i++) {
     auto bufferInfo = uboBuffers[i]->descriptorInfo();
@@ -71,11 +79,20 @@ void FirstApp::run() {
   SimpleRenderSystem simpleRenderSystem{
       lveDevice,
       lveRenderer.getSwapChainRenderPass(),
-      globalSetLayout->getDescriptorSetLayout()};
+      {globalSetLayout->getDescriptorSetLayout(), materialSetLayout->getDescriptorSetLayout()}};
   PointLightSystem pointLightSystem{
       lveDevice,
       lveRenderer.getSwapChainRenderPass(),
       globalSetLayout->getDescriptorSetLayout()};
+
+
+  std::shared_ptr<LveModel> lveModel = std::make_shared<LveModel>(lveDevice, "models/Sponza/Sponza.gltf", *materialSetLayout, *globalPool);
+  auto floor = LveGameObject::createGameObject();
+  floor.model = lveModel;
+  floor.transform.translation = {0.f, .5f, 0.f};
+  floor.transform.scale = {.01f, .01f, .01f};
+  floor.transform.rotation = { 0.0f, 0.0f, 3.14159265f};
+  gameObjects.emplace(floor.getId(), std::move(floor));
   LveCamera camera{};
 
   auto viewerObject = LveGameObject::createGameObject();
@@ -132,7 +149,7 @@ void FirstApp::run() {
 }
 
 void FirstApp::loadGameObjects() {
-  std::shared_ptr<LveModel> lveModel =
+  /*std::shared_ptr<LveModel> lveModel =
       LveModel::createModelFromFile(lveDevice, "models/flat_vase.obj");
   auto flatVase = LveGameObject::createGameObject();
   flatVase.model = lveModel;
@@ -151,8 +168,8 @@ void FirstApp::loadGameObjects() {
   auto floor = LveGameObject::createGameObject();
   floor.model = lveModel;
   floor.transform.translation = {0.f, .5f, 0.f};
-  floor.transform.scale = {3.f, 1.f, 3.f};
-  gameObjects.emplace(floor.getId(), std::move(floor));
+  floor.transform.scale = {3.f, .001f, 3.f};
+  gameObjects.emplace(floor.getId(), std::move(floor));*/
 
   std::vector<glm::vec3> lightColors{
       {1.f, .1f, .1f},

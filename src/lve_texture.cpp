@@ -2,8 +2,9 @@
 #include <vulkan/vulkan_core.h>
 #include <stdexcept>
 #include "lve_device.hpp"
-#define STB_IMAGE_IMPLEMENTATION
+//#define STB_IMAGE_IMPLEMENTATION
 #include "../external/stb/stb_image.h"
+#include <cmath>
 #include "lve_buffer.hpp"
 #include <stdexcept>
 
